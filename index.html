@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puppy Mines: Endless Stages</title>
+    <!-- Custom Puppy Face Favicon -->
+    <link id="favicon" rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23FFB74D'/><path d='M 10 30 C 5 10 30 10 35 35 Z' fill='%238D6E63'/><path d='M 90 30 C 95 10 70 10 65 35 Z' fill='%238D6E63'/><circle cx='35' cy='45' r='6' fill='%233E2723'/><circle cx='65' cy='45' r='6' fill='%233E2723'/><ellipse cx='50' cy='58' rx='8' ry='6' fill='%233E2723'/></svg>">
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            /* Two-tone green lawn stripe background */
+            background-color: #4CAF50;
+            background-image: repeating-linear-gradient(
+                45deg,
+                #43A047,
+                #43A047 30px,
+                #388E3C 30px,
+                #388E3C 60px
+            );
+            color: #ffffff;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 10px;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(26, 21, 18, 0.92);
+            padding: 16px;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+        }
+
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid #443322;
+        }
+
+        .header-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .label {
+            font-size: 0.65rem;
+            color: #b08d70;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .val {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffb74d;
+        }
+
+        .rule-bar {
+            background-color: #2a2018;
+            border: 1px solid #553d26;
+            border-radius: 8px;
+            width: 100%;
+            padding: 6px 10px;
+            margin-bottom: 10px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #FFD54F;
+            line-height: 1.2;
+        }
+
+        #board-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 380px;
+            aspect-ratio: 1 / 1;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 4px solid #ffb74d;
+            box-shadow: 0 0 15px rgba(255, 183, 77, 0.3);
+        }
+
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(8, 1fr);
+            gap: 2px;
+            width: 100%;
+            height: 100%;
+            background-color: #2b211a;
+        }
+
+        .cell {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: filter 0.15s;
+        }
+
+        .cell:hover { filter: brightness(1.2); }
+
+        .cell.covered {
+            filter: brightness(0.75) saturate(0.85);
+            border: 1px solid rgba(0,0,0,0.15);
+        }
+
+        .cell.revealed {
+            filter: brightness(1.1);
+            cursor: default;
+        }
+
+        /* SVG Puppy Face Icon */
+        .cell.flagged::after, .cell.exploded::after {
+            content: '';
+            width: 80%;
+            height: 80%;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><ellipse cx="20" cy="40" rx="12" ry="24" fill="%236D4C41" transform="rotate(-15 20 40)"/><ellipse cx="80" cy="40" rx="12" ry="24" fill="%236D4C41" transform="rotate(15 80 40)"/><circle cx="50" cy="50" r="38" fill="%23FFB74D"/><ellipse cx="50" cy="62" rx="20" ry="14" fill="%23FFF3E0"/><circle cx="35" cy="42" r="5" fill="%233E2723"/><circle cx="65" cy="42" r="5" fill="%233E2723"/><circle cx="37" cy="40" r="2" fill="%23FFFFFF"/><circle cx="67" cy="40" r="2" fill="%23FFFFFF"/><path d="M 42 56 Q 50 48 58 56 Z" fill="%233E2723"/><path d="M 46 64 Q 50 72 54 64 Z" fill="%23FF8A80"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.5));
+        }
+
+        .cell.exploded {
+            background-color: #d32f2f !important;
+        }
+
+        .num-0 { color: #888888; }
+        .num-1 { color: #2196F3; }
+        .num-2 { color: #4CAF50; }
+        .num-3 { color: #F44336; }
+        .num-4 { color: #9C27B0; }
+        .num-5 { color: #FF9800; }
+        .num-6 { color: #00BCD4; }
+
+        .mode-toggle {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+            width: 100%;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 20px;
+            border: 2px solid #553d26;
+            background: #2a2018;
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .btn:hover { border-color: #ffb74d; background: #3d2f24; }
+
+        .btn.active {
+            border-color: #ffa726;
+            background: #ffa726;
+            color: #1a1512;
+        }
+
+        .btn-success {
+            background: #388e3c;
+            border-color: #66bb6a;
+            color: #fff;
+            display: none;
+        }
+
+        .btn-success:hover {
+            background: #2e7d32;
+            border-color: #81c784;
+        }
+
+        .btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            border-color: #333;
+        }
+
+        #status-msg {
+            margin-top: 6px;
+            font-weight: bold;
+            min-height: 22px;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        .text-error { color: #ff6b6b; }
+        .text-success { color: #69f0ae; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <header>
+            <div class="header-box">
+                <span class="label">STAGE</span>
+                <span class="val" id="stage-num">1</span>
+            </div>
+            <div class="header-box">
+                <span class="label">PUPPIES 🐶</span>
+                <span class="val" id="ball-counter">0 / 8</span>
+            </div>
+            <div class="header-box">
+                <span class="label">TIME</span>
+                <span class="val" id="timer">00:00</span>
+            </div>
+        </header>
+
+        <div class="rule-bar">
+            🐶 Exactly 1 <strong>Puppy 🐶</strong> per <strong>Row</strong>, <strong>Column</strong>, and <strong>Park Region</strong>!
+        </div>
+
+        <div class="mode-toggle">
+            <button id="mode-reveal" class="btn active">🔍 SEARCH PARK</button>
+            <button id="mode-flag" class="btn">🐶 PLACE PUPPY</button>
+        </div>
+
+        <div id="board-wrapper">
+            <div id="grid"></div>
+        </div>
+
+        <div id="status-msg"></div>
+
+        <div class="mode-toggle">
+            <button id="next-btn" class="btn btn-success">NEXT PARK 🐾 ➔</button>
+            <button id="reset-btn" class="btn">Reset</button>
+        </div>
+    </div>
+
+    <script>
+        const GRID_SIZE = 8;
+        const TOTAL_BALLS = 8;
+        
+        // Puppy Park Region Colors
+        const COLOR_PALETTE = [
+            "#E57373", "#64B5F6", "#81C784", "#FFD54F", 
+            "#BA68C8", "#FFB74D", "#4DD0E1", "#F06292"
+        ];
+
+        let stage = 1;
+        let board = [];
+        let solution = [];
+        let zoneMap = [];
+        let isFirstClick = true;
+        let isGameOver = false;
+        let secondsElapsed = 0;
+        let timerInterval = null;
+        let currentClickMode = 'reveal';
+
+        // --- Audio Synthesizer (Puppy Sounds) ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx;
+        function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            if (type === 'reveal') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(300, now);
+                osc.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+                osc.start(now); osc.stop(now + 0.08);
+            } else if (type === 'flag') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(900, now + 0.06);
+                gain.gain.setValueAtTime(0.08, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+                osc.start(now); osc.stop(now + 0.06);
+            } else if (type === 'bark') {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(350, now);
+                osc.frequency.linearRampToValueAtTime(200, now + 0.15);
+                gain.gain.setValueAtTime(0.15, now);
+                gain.gain.linearRampToValueAtTime(0.001, now + 0.15);
+                osc.start(now); osc.stop(now + 0.15);
+            } else if (type === 'win') {
+                [0, 0.1, 0.2, 0.3].forEach((delay, i) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.type = 'sine';
+                    const freq = [523, 659, 783, 1046][i];
+                    osc.frequency.setValueAtTime(freq, now + delay);
+                    gain.gain.setValueAtTime(0.1, now + delay);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+                    osc.start(now + delay); osc.stop(now + delay + 0.12);
+                });
+            }
+        }
+
+        // --- Endless Level Generator ---
+        function generateEndlessPuzzle() {
+            let cols = [0, 1, 2, 3, 4, 5, 6, 7];
+            for (let i = cols.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [cols[i], cols[j]] = [cols[j], cols[i]];
+            }
+            solution = cols.map((c, r) => [r, c]);
+
+            zoneMap = Array(GRID_SIZE).fill().map(() => Array(GRID_SIZE).fill(0));
+            let queue = [];
+            
+            solution.forEach(([r, c], zoneIdx) => {
+                zoneMap[r][c] = zoneIdx + 1;
+                queue.push({r, c, zone: zoneIdx + 1});
+            });
+
+            const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+            while (queue.length > 0) {
+                const idx = Math.floor(Math.random() * queue.length);
+                const {r, c, zone} = queue.splice(idx, 1)[0];
+
+                dirs.sort(() => Math.random() - 0.5);
+                for (let [dr, dc] of dirs) {
+                    let nr = r + dr, nc = c + dc;
+                    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE && zoneMap[nr][nc] === 0) {
+                        zoneMap[nr][nc] = zone;
+                        queue.push({r: nr, c: nc, zone});
+                    }
+                }
+            }
+        }
+
+        function initBoard() {
+            board = [];
+            generateEndlessPuzzle();
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                const row = [];
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    row.push({
+                        r, c,
+                        zone: zoneMap[r][c],
+                        hasBall: false,
+                        isRevealed: false,
+                        isFlagged: false,
+                        adjacentCount: 0
+                    });
+                }
+                board.push(row);
+            }
+        }
+
+        function populateBoard() {
+            solution.forEach(([r, c]) => { board[r][c].hasBall = true; });
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (!board[r][c].hasBall) {
+                        board[r][c].adjacentCount = countAdjacentBalls(r, c);
+                    }
+                }
+            }
+        }
+
+        function countAdjacentBalls(row, col) {
+            let count = 0;
+            for (let dr = -1; dr <= 1; dr++) {
+                for (let dc = -1; dc <= 1; dc++) {
+                    if (dr === 0 && dc === 0) continue;
+                    const nr = row + dr, nc = col + dc;
+                    if (nr >= 0 && nr < GRID_SIZE && nc >= 0 && nc < GRID_SIZE) {
+                        if (board[nr][nc].hasBall) count++;
+                    }
+                }
+            }
+            return count;
+        }
+
+        // --- Interaction ---
+        function handleCellAction(r, c, forceFlag = false) {
+            initAudio();
+            if (isGameOver) return;
+
+            const cell = board[r][c];
+            const action = forceFlag ? 'flag' : currentClickMode;
+
+            if (action === 'flag') {
+                if (cell.isRevealed) return;
+                cell.isFlagged = !cell.isFlagged;
+                playSound('flag');
+                renderCellUI(r, c);
+            } else {
+                if (cell.isRevealed || cell.isFlagged) return;
+
+                if (isFirstClick) {
+                    isFirstClick = false;
+                    populateBoard();
+                    startTimer();
+                }
+
+                cell.isRevealed = true;
+                if (cell.hasBall) {
+                    cell.exploded = true;
+                    endGame(false);
+                    return;
+                }
+                playSound('reveal');
+                renderCellUI(r, c);
+            }
+
+            updateCounter();
+            checkWin();
+        }
+
+        function checkWin() {
+            if (isGameOver) return;
+            let unrevealedSafe = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (!board[r][c].hasBall && !board[r][c].isRevealed) unrevealedSafe++;
+                }
+            }
+
+            if (unrevealedSafe === 0 && !isFirstClick) {
+                endGame(true);
+            }
+        }
+
+        function endGame(won) {
+            isGameOver = true;
+            stopTimer();
+            const msg = document.getElementById('status-msg');
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (board[r][c].hasBall) {
+                        board[r][c].isRevealed = true;
+                        renderCellUI(r, c);
+                    }
+                }
+            }
+
+            if (won) {
+                msg.textContent = "🐶 ALL PUPPIES FOUND! Excellent job!";
+                msg.className = "text-success";
+                playSound('win');
+                document.getElementById('next-btn').style.display = 'block';
+            } else {
+                msg.textContent = "🐕 WOOF! You startled a puppy!";
+                msg.className = "text-error";
+                playSound('bark');
+            }
+        }
+
+        // --- UI Rendering ---
+        function renderGrid() {
+            const gridEl = document.getElementById('grid');
+            gridEl.innerHTML = '';
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const div = document.createElement('div');
+                    div.id = `cell-${r}-${c}`;
+                    div.className = 'cell covered';
+                    div.style.backgroundColor = COLOR_PALETTE[board[r][c].zone - 1];
+
+                    div.addEventListener('click', () => handleCellAction(r, c, false));
+                    div.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleCellAction(r, c, true);
+                    });
+
+                    gridEl.appendChild(div);
+                    renderCellUI(r, c);
+                }
+            }
+        }
+
+        function renderCellUI(r, c) {
+            const cell = board[r][c];
+            const div = document.getElementById(`cell-${r}-${c}`);
+            if (!div) return;
+
+            div.className = 'cell';
+            div.textContent = '';
+
+            if (cell.exploded) {
+                div.classList.add('exploded');
+            } else if (cell.isRevealed) {
+                div.classList.add('revealed');
+                if (cell.hasBall) {
+                    div.classList.add('flagged');
+                } else {
+                    div.textContent = cell.adjacentCount;
+                    div.classList.add(`num-${cell.adjacentCount}`);
+                }
+            } else {
+                div.classList.add('covered');
+                if (cell.isFlagged) div.classList.add('flagged');
+            }
+        }
+
+        function updateCounter() {
+            let flags = 0;
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    if (board[r][c].isFlagged) flags++;
+                }
+            }
+            document.getElementById('ball-counter').textContent = `${flags} / ${TOTAL_BALLS}`;
+        }
+
+        function startTimer() {
+            if (timerInterval) clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                secondsElapsed++;
+                const min = Math.floor(secondsElapsed / 60);
+                const sec = secondsElapsed % 60;
+                document.getElementById('timer').textContent = 
+                    `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function stopTimer() { clearInterval(timerInterval); }
+
+        function resetGame(nextStage = false) {
+            stopTimer();
+            secondsElapsed = 0;
+            isFirstClick = true;
+            isGameOver = false;
+
+            if (nextStage) {
+                stage++;
+            }
+
+            document.getElementById('stage-num').textContent = stage;
+            document.getElementById('status-msg').textContent = '';
+            document.getElementById('timer').textContent = '00:00';
+            document.getElementById('next-btn').style.display = 'none';
+
+            initBoard();
+            renderGrid();
+            updateCounter();
+        }
+
+        // --- Controls ---
+        document.getElementById('mode-reveal').addEventListener('click', () => {
+            currentClickMode = 'reveal';
+            document.getElementById('mode-reveal').classList.add('active');
+            document.getElementById('mode-flag').classList.remove('active');
+        });
+
+        document.getElementById('mode-flag').addEventListener('click', () => {
+            currentClickMode = 'flag';
+            document.getElementById('mode-flag').classList.add('active');
+            document.getElementById('mode-reveal').classList.remove('active');
+        });
+
+        document.getElementById('reset-btn').addEventListener('click', () => resetGame(false));
+        document.getElementById('next-btn').addEventListener('click', () => resetGame(true));
+
+        // Start Stage 1
+        resetGame(false);
+    </script>
+</body>
+</html>
