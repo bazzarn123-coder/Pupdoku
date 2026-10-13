@@ -459,8 +459,8 @@
         const TOTAL_BALLS = 8;
         
         const COLOR_PALETTE = [
-            "#E57373", "#64B5F6", "#81C784", "#1a237e", 
-            "#BA68C8", "#FFB74D", "#4DD0E1", "#F06292"
+            "#581845", "#1b5e20", "#81C784", "#1a237e", 
+            "#BA68C8", "#FFB74D", "#1b5e20", "#F06292"
         ];
 
         function getPuppySvg(styleNum) {
@@ -624,9 +624,10 @@
         let currentClickMode = 'reveal';
         let isMouseDown = false;
         let activeDraggedCell = null;
+        let interactedCellsInSwipe = new Set();
 
-        document.addEventListener('mouseup', () => { isMouseDown = false; activeDraggedCell = null; });
-        document.addEventListener('touchend', () => { isMouseDown = false; activeDraggedCell = null; });
+        document.addEventListener('mouseup', () => { isMouseDown = false; activeDraggedCell = null; interactedCellsInSwipe.clear(); });
+        document.addEventListener('touchend', () => { isMouseDown = false; activeDraggedCell = null; interactedCellsInSwipe.clear(); });
 
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx;
@@ -764,7 +765,7 @@
             return count;
         }
 
-        function handleCellAction(r, c, forceFlag = false) {
+        function handleCellAction(r, c, forceFlag = false, isSwipe = false) {
             initAudio();
             if (isGameOver) return;
 
@@ -773,6 +774,10 @@
 
             if (action === 'flag') {
                 if (cell.isRevealed) return;
+                if (isSwipe && cell.isFlagged) {
+                    // Prevent toggling off (crossing out/removing) existing flags during a continuous finger slide
+                    return;
+                }
                 cell.isFlagged = !cell.isFlagged;
                 playSound('flag');
                 renderCellUI(r, c);
@@ -853,19 +858,22 @@
                     div.addEventListener('mousedown', (e) => {
                         isMouseDown = true;
                         activeDraggedCell = board[r][c];
-                        handleCellAction(r, c, e.button === 2);
+                        interactedCellsInSwipe.clear();
+                        interactedCellsInSwipe.add(div.id);
+                        handleCellAction(r, c, e.button === 2, false);
                     });
 
                     div.addEventListener('mouseenter', () => {
-                        if (isMouseDown && !isGameOver && board[r][c] !== activeDraggedCell) {
+                        if (isMouseDown && !isGameOver && !interactedCellsInSwipe.has(div.id)) {
+                            interactedCellsInSwipe.add(div.id);
                             activeDraggedCell = board[r][c];
-                            handleCellAction(r, c, currentClickMode === 'flag');
+                            handleCellAction(r, c, currentClickMode === 'flag', true);
                         }
                     });
 
                     div.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
-                        handleCellAction(r, c, true);
+                        handleCellAction(r, c, true, false);
                     });
 
                     gridEl.appendChild(div);
@@ -873,7 +881,11 @@
                 }
             }
 
-            gridEl.ontouchstart = (e) => { isMouseDown = true; };
+            gridEl.ontouchstart = (e) => { 
+                isMouseDown = true; 
+                interactedCellsInSwipe.clear();
+            };
+
             gridEl.ontouchmove = (e) => {
                 if (!isMouseDown || isGameOver) return;
                 const touch = e.touches[0];
@@ -883,9 +895,10 @@
                     if (parts.length === 3) {
                         const r = parseInt(parts[1]);
                         const c = parseInt(parts[2]);
-                        if (board[r] && board[r][c] && board[r][c] !== activeDraggedCell) {
+                        if (board[r] && board[r][c] && !interactedCellsInSwipe.has(target.id)) {
+                            interactedCellsInSwipe.add(target.id);
                             activeDraggedCell = board[r][c];
-                            handleCellAction(r, c, currentClickMode === 'flag');
+                            handleCellAction(r, c, currentClickMode === 'flag', true);
                         }
                     }
                 }
