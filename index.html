@@ -458,9 +458,16 @@
         const GRID_SIZE = 8;
         const TOTAL_BALLS = 8;
         
-        const COLOR_PALETTE = [
-            "#581845", "#1b5e20", "#81C784", "#1a237e", 
-            "#BA68C8", "#FFB74D", "#1b5e20", "#F06292"
+        // Exact 8 colors required: burgundy red, cream (replacing yellow), pink, blue, orange, purple, green, lime
+        const CONSTANT_PALETTE = [
+            "#880e4f", // burgundy red
+            "#fffdd0", // cream
+            "#e91e63", // pink
+            "#1e88e5", // blue
+            "#fb8c00", // orange
+            "#8e24aa", // purple
+            "#388e3c", // green
+            "#76ff03"  // lime
         ];
 
         function getPuppySvg(styleNum) {
@@ -574,7 +581,6 @@
             document.getElementById('favicon').href = getPuppySvg(styleNum);
             document.getElementById('bar-puppy-icon').style.backgroundImage = `url("${getPuppySvg(styleNum)}")`;
 
-            // Update active board cells immediately if game is running
             if (hasStartedGame) {
                 updateBoardPuppySVGs();
             }
@@ -775,7 +781,6 @@
             if (action === 'flag') {
                 if (cell.isRevealed) return;
                 if (isSwipe && cell.isFlagged) {
-                    // Prevent toggling off (crossing out/removing) existing flags during a continuous finger slide
                     return;
                 }
                 cell.isFlagged = !cell.isFlagged;
@@ -853,7 +858,7 @@
                     const div = document.createElement('div');
                     div.id = `cell-${r}-${c}`;
                     div.className = 'cell covered';
-                    div.style.backgroundColor = COLOR_PALETTE[board[r][c].zone - 1];
+                    div.style.backgroundColor = CONSTANT_PALETTE[board[r][c].zone - 1];
 
                     div.addEventListener('mousedown', (e) => {
                         isMouseDown = true;
