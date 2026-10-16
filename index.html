@@ -62,7 +62,7 @@
         .splash-subtitle {
             font-size: clamp(0.85rem, 2.2vw, 1rem);
             color: #ffffff;
-            margin-bottom: 16px;
+            margin-bottom: 14px;
             text-shadow: 0 2px 5px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.6);
             font-weight: 700;
         }
@@ -71,7 +71,7 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 10px;
-            margin-bottom: 16px;
+            margin-bottom: 12px;
             width: 100%;
         }
 
@@ -81,7 +81,7 @@
             -webkit-backdrop-filter: blur(8px);
             border: 2px solid rgba(255, 183, 77, 0.5);
             border-radius: 12px;
-            padding: 10px 6px;
+            padding: 8px 6px;
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             display: flex;
@@ -104,8 +104,8 @@
         }
 
         .puppy-choice-preview {
-            width: clamp(40px, 11vw, 55px);
-            height: clamp(40px, 11vw, 55px);
+            width: clamp(36px, 10vw, 48px);
+            height: clamp(36px, 10vw, 48px);
             margin-bottom: 4px;
             background-size: contain;
             background-repeat: no-repeat;
@@ -118,6 +118,41 @@
             font-weight: bold;
             color: #ffcc80;
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .splash-level-select {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: rgba(30, 20, 12, 0.75);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 2px solid rgba(255, 183, 77, 0.5);
+            border-radius: 12px;
+            padding: 8px 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .splash-level-label {
+            font-size: clamp(0.75rem, 2vw, 0.85rem);
+            font-weight: bold;
+            color: #ffcc80;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .splash-level-input {
+            width: 70px;
+            background: rgba(20, 15, 11, 0.8);
+            border: 1px solid rgba(255, 183, 77, 0.6);
+            border-radius: 8px;
+            color: #ffb74d;
+            font-weight: bold;
+            font-size: 0.95rem;
+            text-align: center;
+            padding: 4px;
+            outline: none;
         }
 
         .splash-btn-row {
@@ -394,7 +429,7 @@
     <!-- SPLASH SCREEN WITH IMAGE BACKGROUND -->
     <div id="splash-overlay">
         <div class="splash-content">
-            <div class="splash-subtitle">Choose your companion to begin your puzzle adventure!</div>
+            <div class="splash-subtitle">Choose your companion & stage to begin!</div>
             
             <div class="puppy-options">
                 <div class="puppy-choice selected" data-style="1" onclick="selectPuppyStyle(1)">
@@ -411,9 +446,15 @@
                 </div>
             </div>
 
+            <!-- LEVEL SELECTOR -->
+            <div class="splash-level-select">
+                <span class="splash-level-label">Select Stage:</span>
+                <input type="number" id="splash-stage-input" class="splash-level-input" min="1" value="1">
+            </div>
+
             <div class="splash-btn-row">
-                <button class="btn" onclick="startNewGameSession()" style="flex: 1; padding: 12px; font-size: 0.85rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6); background: rgba(70, 48, 35, 0.8);">NEW GAME</button>
-                <button id="splash-continue-btn" class="btn active" onclick="continueGameSession()" style="flex: 1; padding: 12px; font-size: 0.85rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6);">CONTINUE ➔</button>
+                <button class="btn" onclick="startNewGameSession()" style="flex: 1; padding: 10px; font-size: 0.8rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6); background: rgba(70, 48, 35, 0.8);">NEW GAME</button>
+                <button id="splash-continue-btn" class="btn active" onclick="continueGameSession()" style="flex: 1; padding: 10px; font-size: 0.8rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6);">CONTINUE ➔</button>
             </div>
         </div>
     </div>
@@ -569,6 +610,7 @@
 
         let selectedPuppyStyle = 1;
         let hasStartedGame = false;
+        let stage = 1;
 
         function updateSplashPreviews() {
             document.getElementById('prev-1').style.backgroundImage = `url("${getPuppySvg(1)}")`;
@@ -619,7 +661,8 @@
         function startNewGameSession() {
             initAudio();
             hasStartedGame = true;
-            stage = 1;
+            const stageInput = parseInt(document.getElementById('splash-stage-input').value);
+            stage = isNaN(stageInput) || stageInput < 1 ? 1 : stageInput;
             resetGame(false);
             document.getElementById('splash-overlay').style.display = 'none';
             updateSplashButtons();
@@ -629,8 +672,12 @@
             initAudio();
             document.getElementById('splash-overlay').style.display = 'none';
 
-            if (!hasStartedGame) {
+            const stageInput = parseInt(document.getElementById('splash-stage-input').value);
+            const targetStage = isNaN(stageInput) || stageInput < 1 ? 1 : stageInput;
+
+            if (!hasStartedGame || targetStage !== stage) {
                 hasStartedGame = true;
+                stage = targetStage;
                 resetGame(false);
             } else {
                 updateBoardPuppySVGs();
@@ -643,11 +690,11 @@
 
         function returnToMenu() {
             stopTimer();
+            document.getElementById('splash-stage-input').value = stage;
             document.getElementById('splash-overlay').style.display = 'flex';
             updateSplashButtons();
         }
 
-        let stage = 1;
         let board = [];
         let solution = [];
         let zoneMap = [];
@@ -1003,6 +1050,7 @@
             }
 
             document.getElementById('stage-num').textContent = stage;
+            document.getElementById('splash-stage-input').value = stage;
             document.getElementById('status-msg').textContent = '';
             document.getElementById('timer').textContent = '00:00';
             document.getElementById('next-btn').style.display = 'none';
