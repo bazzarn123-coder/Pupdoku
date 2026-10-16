@@ -120,6 +120,12 @@
             text-shadow: 0 1px 2px rgba(0,0,0,0.8);
         }
 
+        .splash-btn-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
         /* --- GAME CONTAINER FULL-WIDTH & RESPONSIVE STYLING --- */
         #game-container {
             width: 100%;
@@ -405,7 +411,10 @@
                 </div>
             </div>
 
-            <button id="splash-start-btn" class="btn active" onclick="startGameSession()" style="width: 100%; padding: 12px; font-size: 0.95rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6);">START ADVENTURE ➔</button>
+            <div class="splash-btn-row">
+                <button class="btn" onclick="startNewGameSession()" style="flex: 1; padding: 12px; font-size: 0.85rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6); background: rgba(70, 48, 35, 0.8);">NEW GAME</button>
+                <button id="splash-continue-btn" class="btn active" onclick="continueGameSession()" style="flex: 1; padding: 12px; font-size: 0.85rem; box-shadow: 0 8px 20px rgba(0,0,0,0.6);">CONTINUE ➔</button>
+            </div>
         </div>
     </div>
 
@@ -567,6 +576,7 @@
             document.getElementById('prev-3').style.backgroundImage = `url("${getPuppySvg(3)}")`;
             document.getElementById('favicon').href = getPuppySvg(selectedPuppyStyle);
             document.getElementById('bar-puppy-icon').style.backgroundImage = `url("${getPuppySvg(selectedPuppyStyle)}")`;
+            updateSplashButtons();
         }
         updateSplashPreviews();
 
@@ -595,7 +605,27 @@
             }
         }
 
-        function startGameSession() {
+        function updateSplashButtons() {
+            const continueBtn = document.getElementById('splash-continue-btn');
+            if (!hasStartedGame) {
+                continueBtn.style.opacity = '0.6';
+                continueBtn.style.filter = 'grayscale(30%)';
+            } else {
+                continueBtn.style.opacity = '1';
+                continueBtn.style.filter = 'none';
+            }
+        }
+
+        function startNewGameSession() {
+            initAudio();
+            hasStartedGame = true;
+            stage = 1;
+            resetGame(false);
+            document.getElementById('splash-overlay').style.display = 'none';
+            updateSplashButtons();
+        }
+
+        function continueGameSession() {
             initAudio();
             document.getElementById('splash-overlay').style.display = 'none';
 
@@ -608,15 +638,13 @@
                     startTimer();
                 }
             }
-            document.getElementById('splash-start-btn').textContent = "CONTINUE ADVENTURE ➔";
+            updateSplashButtons();
         }
 
         function returnToMenu() {
             stopTimer();
             document.getElementById('splash-overlay').style.display = 'flex';
-            if (hasStartedGame) {
-                document.getElementById('splash-start-btn').textContent = "CONTINUE ADVENTURE ➔";
-            }
+            updateSplashButtons();
         }
 
         let stage = 1;
